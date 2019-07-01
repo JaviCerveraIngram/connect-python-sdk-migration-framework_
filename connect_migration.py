@@ -10,7 +10,7 @@ We can use an instance of this class into our request processor, like this: ::
 
     class ProductFulfillment(FulfillmentAutomation):
         def __init__(self):
-            self.migration_handler = MigrationHandler({
+            self.migration_handler = connect_migration.MigrationHandler({
                 'email': lambda data, request_id: data['teamAdminEmail'].upper(),
                 'team_id': lambda data, request_id: data['teamId'].upper(),
                 'team_name': lambda data, request_id: data['teamName'].upper(),

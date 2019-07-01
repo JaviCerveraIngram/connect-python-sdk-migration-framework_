@@ -12,7 +12,7 @@ If you have a requirements file in your project, just add the following line to 
 
 You can also install it directly passing the previous statement to `pip install` if you don't rely on a requirements file for some reason.
 
-If you don't use `pip` at all, simply copy the `migration_handler.py` file from the repository to your project.
+If you don't use `pip` at all, simply copy the `connect_migration.py` file from the repository to your project.
 
 ## Usage
 
@@ -37,7 +37,7 @@ We can use an instance of this class into our request processor, like this:
 from connect.models import ActivationTileResponse
 from connect.resources import FulfillmentAutomation
 
-from migration_handler import MigrationHandler
+from connect_migration import MigrationHandler
 
 
 class ProductFulfillment(FulfillmentAutomation):

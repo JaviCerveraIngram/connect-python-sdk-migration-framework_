@@ -14,7 +14,7 @@ import six
 from connect.exceptions import SkipRequest
 from connect.models import Fulfillment
 
-import migration_handler
+import connect_migration
 
 
 def _load_str(filename):
@@ -33,8 +33,8 @@ def _load_str(filename):
 
 def test_properties():
     # type: () -> None
-    handler = migration_handler.MigrationHandler()
-    assert isinstance(handler, migration_handler.MigrationHandler)
+    handler = connect_migration.MigrationHandler()
+    assert isinstance(handler, connect_migration.MigrationHandler)
     assert isinstance(handler.transformations, dict)
     assert isinstance(handler.migration_key, str)
     assert isinstance(handler.serialize, bool)
@@ -45,7 +45,7 @@ def test_properties():
 
 def test_needs_migration():
     # type: () -> None
-    handler = migration_handler.MigrationHandler()
+    handler = connect_migration.MigrationHandler()
 
     # No migration needed
     response_no_migration = _load_str('response.json')
@@ -62,7 +62,7 @@ def test_needs_migration():
     assert handler._needs_migration(request)
 
 
-@patch('migration_handler.logger.info')
+@patch('connect_migration.logger.info')
 def test_no_migration(info_mock):
     # type: (Mock) -> None
     response = _load_str('response.json')
@@ -70,21 +70,21 @@ def test_no_migration(info_mock):
     assert isinstance(requests, list)
     assert len(requests) == 1
 
-    handler = migration_handler.MigrationHandler()
+    handler = connect_migration.MigrationHandler()
     request = handler.migrate(requests[0])
     info_mock.assert_called_once_with('[MIGRATION::PR-5852-1608-0000] '
                                       'Request does not need migration.')
     assert request == requests[0]
 
 
-@patch('migration_handler.logger.debug')
-@patch('migration_handler.logger.info')
+@patch('connect_migration.logger.debug')
+@patch('connect_migration.logger.info')
 def test_migration_skip_all(info_mock, debug_mock):
     # type: (Mock, Mock) -> None
     response = _load_str('request.migrate.valid.json')
     request = Fulfillment.deserialize(response)
 
-    handler = migration_handler.MigrationHandler()
+    handler = connect_migration.MigrationHandler()
     request_out = handler.migrate(request)
 
     assert info_mock.call_count == 2
@@ -115,15 +115,15 @@ def test_migration_skip_all(info_mock, debug_mock):
         assert request.asset.params[i].value == request_out.asset.params[i].value
 
 
-@patch('migration_handler.logger.error')
-@patch('migration_handler.logger.debug')
-@patch('migration_handler.logger.info')
+@patch('connect_migration.logger.error')
+@patch('connect_migration.logger.debug')
+@patch('connect_migration.logger.info')
 def test_migration_wrong_info(info_mock, debug_mock, error_mock):
     # type: (Mock, Mock, Mock) -> None
     response = _load_str('request.migrate.invalid.json')
     request = Fulfillment.deserialize(response)
 
-    handler = migration_handler.MigrationHandler()
+    handler = connect_migration.MigrationHandler()
     with pytest.raises(SkipRequest):
         handler.migrate(request)
 
@@ -145,14 +145,14 @@ def test_migration_wrong_info(info_mock, debug_mock, error_mock):
     #                              'line 1 column 17 - line 1 column 179 (char 16 - 178)')
 
 
-@patch('migration_handler.logger.debug')
-@patch('migration_handler.logger.info')
+@patch('connect_migration.logger.debug')
+@patch('connect_migration.logger.info')
 def test_migration_direct(info_mock, debug_mock):
     # type: (Mock, Mock) -> None
     response = _load_str('request.migrate.direct.success.json')
     request = Fulfillment.deserialize(response)
 
-    handler = migration_handler.MigrationHandler()
+    handler = connect_migration.MigrationHandler()
     request_out = handler.migrate(request)
 
     assert request_out != request
@@ -185,15 +185,15 @@ def test_migration_direct(info_mock, debug_mock):
     ])
 
 
-@patch('migration_handler.logger.error')
-@patch('migration_handler.logger.debug')
-@patch('migration_handler.logger.info')
+@patch('connect_migration.logger.error')
+@patch('connect_migration.logger.debug')
+@patch('connect_migration.logger.info')
 def test_migration_direct_no_serialize(info_mock, debug_mock, error_mock):
     # type: (Mock, Mock, Mock) -> None
     response = _load_str('request.migrate.direct.notserialized.json')
     request = Fulfillment.deserialize(response)
 
-    handler = migration_handler.MigrationHandler()
+    handler = connect_migration.MigrationHandler()
     with pytest.raises(SkipRequest):
         handler.migrate(request)
 
@@ -222,14 +222,14 @@ def test_migration_direct_no_serialize(info_mock, debug_mock, error_mock):
     ])
 
 
-@patch('migration_handler.logger.debug')
-@patch('migration_handler.logger.info')
+@patch('connect_migration.logger.debug')
+@patch('connect_migration.logger.info')
 def test_migration_direct_serialize(info_mock, debug_mock):
     # type: (Mock, Mock) -> None
     response = _load_str('request.migrate.direct.notserialized.json')
     request = Fulfillment.deserialize(response)
 
-    handler = migration_handler.MigrationHandler(serialize=True)
+    handler = connect_migration.MigrationHandler(serialize=True)
     request_out = handler.migrate(request)
 
     assert request_out != request
@@ -258,14 +258,14 @@ def test_migration_direct_serialize(info_mock, debug_mock):
     ])
 
 
-@patch('migration_handler.logger.debug')
-@patch('migration_handler.logger.info')
+@patch('connect_migration.logger.debug')
+@patch('connect_migration.logger.info')
 def test_migration_transform(info_mock, debug_mock):
     # type: (Mock, Mock) -> None
     response = _load_str('request.migrate.transformation.json')
     request = Fulfillment.deserialize(response)
 
-    handler = migration_handler.MigrationHandler({
+    handler = connect_migration.MigrationHandler({
         'email': lambda data, request_id: data['teamAdminEmail'].upper(),
         'team_id': lambda data, request_id: data['teamId'].upper(),
         'team_name': lambda data, request_id: data['teamName'].upper(),
@@ -308,15 +308,15 @@ def test_migration_transform(info_mock, debug_mock):
     ])
 
 
-@patch('migration_handler.logger.error')
-@patch('migration_handler.logger.debug')
-@patch('migration_handler.logger.info')
+@patch('connect_migration.logger.error')
+@patch('connect_migration.logger.debug')
+@patch('connect_migration.logger.info')
 def test_migration_transform_manual_fail(info_mock, debug_mock, error_mock):
     # type: (Mock, Mock, Mock) -> None
     response = _load_str('request.migrate.transformation.json')
     request = Fulfillment.deserialize(response)
 
-    handler = migration_handler.MigrationHandler({
+    handler = connect_migration.MigrationHandler({
         'email': _raise_error
     })
     with pytest.raises(SkipRequest):
@@ -351,4 +351,4 @@ def test_migration_transform_manual_fail(info_mock, debug_mock, error_mock):
 
 def _raise_error(_, __):
     # type: (Dict[str, str], str) -> None
-    raise migration_handler.MigrationParamError('Manual fail.')
+    raise connect_migration.MigrationParamError('Manual fail.')
