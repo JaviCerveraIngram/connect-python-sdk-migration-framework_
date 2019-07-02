@@ -53,13 +53,13 @@ def test_needs_migration():
     assert isinstance(requests_no_migration, list)
     assert len(requests_no_migration) == 1
     assert isinstance(requests_no_migration[0], Fulfillment)
-    assert not handler._needs_migration(requests_no_migration[0])
+    assert not requests_no_migration[0].needs_migration(handler.migration_key)
 
     # Migration needed
     response_migration = _load_str('request.migrate.valid.json')
     request = Fulfillment.deserialize(response_migration)
     assert isinstance(request, Fulfillment)
-    assert handler._needs_migration(request)
+    assert request.needs_migration(handler.migration_key)
 
 
 @patch('connect_migration.logger.info')

@@ -103,7 +103,7 @@ class MigrationHandler(object):
         :raises SkipRequest: Raised if migration fails for some reason.
         :raises MigrationParamError: Raised if the value for a parameter is not a string.
         """
-        if self._needs_migration(request):
+        if request.needs_migration(self.migration_key):
             logger.info('[MIGRATION::{}] Running migration operations for request {}'
                         .format(request.id, request.id))
             request_copy = copy.deepcopy(request)
@@ -186,11 +186,6 @@ class MigrationHandler(object):
             logger.info('[MIGRATION::{}] Request does not need migration.'
                         .format(request.id))
             return request
-
-    def _needs_migration(self, request):
-        # type: (Fulfillment) -> bool
-        param = request.asset.get_param_by_id(self.migration_key)
-        return param is not None and param.value
 
     @staticmethod
     def _format_params(params):

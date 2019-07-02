@@ -43,6 +43,8 @@ from connect_migration import MigrationHandler
 class ProductFulfillment(FulfillmentAutomation):
     def __init__(self):
         super(ProductFulfillment, self).__init__()
+        
+        # Create a migration handler and define transformation functions
         self.migration_handler = MigrationHandler({
             'email': lambda data, request_id: data['teamAdminEmail'].upper(),
             'team_id': lambda data, request_id: data['teamId'].upper(),
@@ -52,14 +54,16 @@ class ProductFulfillment(FulfillmentAutomation):
 
     def process_request(self, request):
         if request.type == 'purchase':
-            request = self.migration_handler.migrate(request)
-
-            # The migrate() method returns a new request object with
-            # the parameter values updated, we must update the parameters
-            # and approve the fulfillment
-
-            self.update_parameters(request.id, request.asset.params)
-            return ActivationTileResponse('The data has been migrated :)')
+            if request.needs_migration():
+                # The migrate() method returns a new request object with
+                # the parameter values updated, we must update the parameters
+                # and approve the fulfillment
+                request = self.migration_handler.migrate(request)
+                self.update_parameters(request.id, request.asset.params)
+                return ActivationTileResponse('The data has been migrated :)')
+            else:
+                # We perform normal processing here ...
+                pass
 ```
 
 The previous example converts string migration data values to uppercase, while it multiplies the integer value of parameter `licNumber` by 10.
